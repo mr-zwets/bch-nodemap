@@ -1,0 +1,13 @@
+# local dev runtime (postgres binaries + data, geoip dbs)
+.local/
+# untouched upstream cashnodes clones, for reference only
+reference/
+# downloaded archive data
+archive/data/
+archive/*.log
+# build output
+/crawler/bin/
+node_modules/
+.nuxt/
+.output/
+.env
