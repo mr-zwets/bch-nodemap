@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ConsensusCounts, SnapshotSummary, VersionRow } from '#shared/types/api'
-import { CONSENSUS_LABEL, CONSENSUS_STATUSES, AT_TIP_MAX_LAG, BEHIND_MAX_LAG } from '#shared/utils/consensus'
+import { CONSENSUS_LABEL, CONSENSUS_STATUSES, AT_TIP_MAX_LAG, BEHIND_MAX_LAG, stallLabel } from '#shared/utils/consensus'
 import { implShort, parseUserAgent } from '#shared/utils/ua'
 
 const route = useRoute()
@@ -86,6 +86,8 @@ function pieLabel(row: { key: string }) {
     default: return row.key
   }
 }
+
+const stallOf = (height: number | null) => (s.value ? stallLabel(height, s.value.tip.height, s.value.snapshot.takenAt) : null)
 
 function versionRelease(row: { key: string }) {
   const r = row as unknown as VersionRow
@@ -217,7 +219,7 @@ function uaRelease(ua: string) {
         <div v-if="tab === 'height'" class="table-scroll">
           <table class="data">
             <thead>
-              <tr><th>Height</th><th class="r">Blocks behind tip</th><th class="r">Nodes</th><th>Status</th></tr>
+              <tr><th>Height</th><th class="r">Blocks behind tip</th><th class="r">Nodes</th><th>Status</th><th>Stuck at</th></tr>
             </thead>
             <tbody>
               <tr v-for="h in s.heights" :key="String(h.height)">
@@ -225,6 +227,7 @@ function uaRelease(ua: string) {
                 <td class="r">{{ h.lag == null ? '—' : h.lag <= 0 ? (h.lag === 0 ? '0' : `${-h.lag} ahead`) : fmtInt(h.lag) }}</td>
                 <td class="r">{{ h.count }}</td>
                 <td><StatusBadge :status="h.status" /></td>
+                <td><span v-if="stallOf(h.height)" class="stall" :title="stallOf(h.height)!.detail">{{ stallOf(h.height)!.label }}</span></td>
               </tr>
             </tbody>
           </table>
@@ -277,11 +280,12 @@ function uaRelease(ua: string) {
 .stalled-note { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--critical-ink); font-weight: 600; white-space: nowrap; }
 tr.allstalled td:first-child { color: var(--ink-2); }
 .tabs-row { display: flex; align-items: flex-end; gap: 12px; border-bottom: 1px solid var(--rule); margin: -4px 0 12px; }
-.tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; margin-bottom: -1px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; flex: 1; margin-bottom: -1px; }
+.tabs::-webkit-scrollbar { display: none; }
 .view-toggle { flex: none; margin-bottom: 6px; }
 .tabs button {
   font: inherit; font-size: 0.9rem; background: none; border: 0; color: var(--ink-2); cursor: pointer;
-  padding: 8px 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
+  padding: 8px 12px; border-bottom: 2px solid transparent; white-space: nowrap;
 }
 .tabs button[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
 .plain { color: var(--ink); text-decoration: none; }
@@ -299,4 +303,5 @@ tr.allstalled td:first-child { color: var(--ink-2); }
 }
 .tiph { display: inline-flex; align-items: center; gap: 4px; }
 .cc { margin-left: 6px; }
+.stall { font-size: 0.85rem; color: var(--ink-2); }
 </style>

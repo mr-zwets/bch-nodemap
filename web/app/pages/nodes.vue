@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { stallLabel } from '#shared/utils/consensus'
 import type { NodeRow, NodesResponse, SnapshotSummary } from '#shared/types/api'
 import { CONSENSUS_LABEL, CONSENSUS_STATUSES } from '#shared/utils/consensus'
 
@@ -197,7 +198,7 @@ const chips = computed(() =>
                 <div v-if="n.hostname && n.hostname !== n.address" class="sub" :title="n.hostname">{{ n.hostname }}</div>
               </td>
               <td class="mono ua c-ua"><span class="swatch" :style="{ background: implColor(n.impl) }" /> {{ n.userAgent || '(empty)' }}<ReleaseBadge :impl="n.impl" :version="n.version" /></td>
-              <td class="r num c-height" data-label="Height">{{ n.height == null ? '—' : fmtInt(n.height) }}<div v-if="n.height != null && data?.tip != null && data.tip - n.height > 2" class="sub">−{{ fmtInt(data.tip - n.height) }}</div></td>
+              <td class="r num c-height" data-label="Height">{{ n.height == null ? '—' : fmtInt(n.height) }}<div v-if="n.height != null && data?.tip != null && data.tip - n.height > 2" class="sub">−{{ fmtInt(data.tip - n.height) }}</div><div v-if="data && stallLabel(n.height, data.tip, data.snapshot.takenAt)" class="sub stall" :title="stallLabel(n.height, data.tip, data.snapshot.takenAt)!.detail">{{ stallLabel(n.height, data.tip, data.snapshot.takenAt)!.label }}</div></td>
               <td class="c-loc"><span v-if="n.country" class="flag" aria-hidden="true">{{ flag(n.country) }}</span>{{ n.country ? countryName(n.country) : '—' }}<div v-if="n.city" class="sub">{{ n.city }}</div></td>
               <td class="org c-org">{{ n.provider }}<div class="sub" :title="n.org ?? undefined">{{ n.org && n.org !== n.provider ? n.org : '' }}<span v-if="n.asn" class="mono"> AS{{ n.asn }}</span></div></td>
               <td class="num nowrap c-seen" data-label="First seen">{{ fmtDate(n.firstSeen) }}</td>
