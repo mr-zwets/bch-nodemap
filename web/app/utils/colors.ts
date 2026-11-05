@@ -9,6 +9,7 @@ const IMPL_SLOT: Record<string, string> = {
   'Bitcoin Verde': '--s4', // amber
   'Knuth': '--s3', // brown
   'Flowee': '--s6', // cyan
+  'Vcash': '--impl-vcash', // dark green
 }
 
 export function implVar(impl: string | undefined): string {

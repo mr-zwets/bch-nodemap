@@ -21,6 +21,7 @@
   --s5: #e87ba4; --s6: #1696b8; --s7: #4a3aa7; --s8: #e34948;
   --s-other: #a3a19a;
   --impl-bchd: #24e6aa; /* bchd.cash logo */
+  --impl-vcash: #1f6b3a; /* dark forest green */
 
   /* status (fixed in both modes) */
   --good: #0ac18e; --warning: #fab219; --critical: #d03b3b; --unknown: #a3a19a;
@@ -50,6 +51,7 @@
     --s1: #3987e5; --s2: #d95926; --s3: #b4834d; --s4: #c98500;
     --s5: #d55181; --s6: #3ab0d0; --s7: #9085e9; --s8: #e66767;
     --s-other: #6f6d67;
+    --impl-vcash: #3d9a5b;
     --unknown: #6f6d67;
     --good-ink: #0ac18e; --warning-ink: #fab219; --critical-ink: #f07070;
   }
@@ -72,6 +74,7 @@
   --s1: #3987e5; --s2: #d95926; --s3: #b4834d; --s4: #c98500;
   --s5: #d55181; --s6: #3ab0d0; --s7: #9085e9; --s8: #e66767;
   --s-other: #6f6d67;
+  --impl-vcash: #3d9a5b;
   --unknown: #6f6d67;
   --good-ink: #0ac18e; --warning-ink: #fab219; --critical-ink: #f07070;
 }
