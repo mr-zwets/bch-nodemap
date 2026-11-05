@@ -11,6 +11,7 @@ if (error.value?.statusCode === 404 && snapshotId.value) {
   throw createError({ statusCode: 404, statusMessage: `Snapshot ${snapshotId.value} not found`, fatal: true })
 }
 const mounted = useMounted()
+const now = useNow()
 
 useHead({ title: () => (snapshotId.value ? `Snapshot ${snapshotId.value}` : 'Overview') })
 
@@ -115,7 +116,7 @@ function uaRelease(ua: string) {
         </h1>
         <p class="meta">
           <span>Crawl of {{ fmtDateTime(s.snapshot.takenAt) }}</span>
-          <span v-if="mounted" class="muted">({{ fmtAgo(s.snapshot.takenAt) }})</span>
+          <span v-if="mounted" class="muted">({{ fmtAgo(s.snapshot.takenAt, now) }})</span>
           <span v-if="s.snapshot.discovered" class="muted">· {{ fmtInt(s.snapshot.discovered) }} addresses discovered</span>
           <span v-if="s.snapshot.durationMs" class="muted">· {{ Math.round(s.snapshot.durationMs / 1000) }} s</span>
         </p>

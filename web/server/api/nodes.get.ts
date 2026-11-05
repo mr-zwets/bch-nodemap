@@ -81,7 +81,8 @@ export default defineEventHandler(async (event): Promise<NodesResponse> => {
     return (x < y ? -1 : x > y ? 1 : 0) * sign || a.address.localeCompare(b.address)
   })
 
-  setHeader(event, 'cache-control', 'public, max-age=60')
+  // "latest" moves with every crawl; a fixed id never changes
+  setHeader(event, 'cache-control', str(q, 'snapshot') === 'latest' || !str(q, 'snapshot') ? 'no-cache' : 'public, max-age=300')
   return {
     snapshot: snap,
     tip,
