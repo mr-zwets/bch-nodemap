@@ -14,7 +14,7 @@ export default defineNuxtConfig({
         { name: 'color-scheme', content: 'light dark' },
         {
           name: 'description',
-          content: 'Reachable Bitcoin Cash (BCH) full nodes: count, implementations, versions, countries, hosting and history since 2020.',
+          content: 'Reachable Bitcoin Cash (BCH) full nodes: count, implementations, versions, countries and hosting, crawled every 10 minutes.',
         },
       ],
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
