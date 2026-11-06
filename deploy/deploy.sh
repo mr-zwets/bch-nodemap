@@ -5,6 +5,7 @@
 set -euo pipefail
 DIR=/opt/bch-nodemap
 as() { sudo -u nodemap -H "$@"; }
+cd /  # our home is 0700; commands run as nodemap must not inherit it as cwd
 
 echo "== pull"
 as git -C "$DIR" pull -q --ff-only
@@ -30,5 +31,5 @@ for _ in $(seq 1 30); do
   curl -fs -o /dev/null http://127.0.0.1:3000/api/snapshots/head && break
   sleep 1
 done
-systemctl --no-pager --lines=0 status nodemap-web.service nodemap-crawler.service | grep -E "^●|Active:"
+systemctl --no-pager --lines=0 status nodemap-web.service nodemap-crawler.service | grep -E "^●|Active:" || true
 curl -fs http://127.0.0.1:3000/api/snapshots/head && echo || echo "web not answering yet; see: journalctl -u nodemap-web -n 50"

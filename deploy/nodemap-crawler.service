@@ -24,6 +24,21 @@ ProtectControlGroups=yes
 RestrictSUIDSGID=yes
 RestrictNamespaces=yes
 LockPersonality=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictRealtime=yes
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
+# a blocked syscall fails with EPERM instead of killing the process
+SystemCallErrorNumber=EPERM
+UMask=0077
+# Go needs no writable+executable memory (Node's JIT does, so not in the web unit)
+MemoryDenyWriteExecute=yes
 
 [Install]
 WantedBy=multi-user.target
