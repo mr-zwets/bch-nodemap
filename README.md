@@ -54,3 +54,7 @@ Tests: `cd crawler && go test ./...`
 
 - `snapshot_nodes.height` is the start height a node reports in its `version` message, so being 0–1 blocks behind is normal. Nodes far behind the tip are most likely stuck at a past network upgrade (e.g. all BCH Unlimited nodes as of Oct 2026).
 - GeoIP data by [DB-IP](https://db-ip.com) (CC BY 4.0). MaxMind GeoLite2 `.mmdb` files work as drop-in replacements.
+
+## License
+
+MIT, see [LICENSE](LICENSE). GeoIP data is not included; `scripts/geoip.sh` downloads it under its own CC BY 4.0 licence.
