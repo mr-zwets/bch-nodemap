@@ -30,6 +30,7 @@
         Data: bch-nodemap crawler.
         <a href="https://db-ip.com" rel="noopener">GeoIP by DB-IP</a>
         (<a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener license">CC BY 4.0</a>).
+        Open source (MIT) on <a href="https://github.com/mr-zwets/bch-nodemap" rel="noopener">GitHub</a>.
       </p>
       <p class="muted">Reachable = completed a version handshake with our crawler.</p>
     </footer>
