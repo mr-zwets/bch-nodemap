@@ -11,11 +11,18 @@ export function useThemeVars<K extends string>(names: readonly K[]) {
     vars.value = out
   }
   let mq: MediaQueryList | undefined
+  let mo: MutationObserver | undefined
   onMounted(() => {
     read()
+    // OS scheme changes, and the theme toggle (which sets <html data-theme>)
     mq = window.matchMedia('(prefers-color-scheme: dark)')
     mq.addEventListener('change', read)
+    mo = new MutationObserver(read)
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
   })
-  onBeforeUnmount(() => mq?.removeEventListener('change', read))
+  onBeforeUnmount(() => {
+    mq?.removeEventListener('change', read)
+    mo?.disconnect()
+  })
   return vars
 }

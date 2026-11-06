@@ -18,6 +18,15 @@ export default defineNuxtConfig({
         },
       ],
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      script: [
+        {
+          // Resolve the theme before first paint so there is no flash of the wrong one:
+          // the stored choice (see app/composables/useTheme.ts), else the OS preference.
+          innerHTML:
+            "try{var s=localStorage.getItem('darkMode');document.documentElement.dataset.theme=s==='true'?'dark':s==='false'?'light':matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){}",
+          tagPriority: 'critical',
+        },
+      ],
     },
   },
   // Plain Node server output (node .output/server/index.mjs); no host-specific preset.

@@ -19,6 +19,7 @@
           <NuxtLink to="/nodes" active-class="on">Nodes</NuxtLink>
           <!-- History hidden until the crawler has built up data; /history still works -->
         </nav>
+        <ThemeToggle class="theme" />
       </div>
     </header>
     <main class="wrap main">
@@ -38,7 +39,8 @@
 <style scoped>
 .shell { min-height: 100vh; display: flex; flex-direction: column; }
 .top { border-bottom: 1px solid var(--rule); background: var(--surface); }
-.top-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; flex-wrap: wrap; }
+.top-inner { display: flex; align-items: center; gap: 16px; min-height: 56px; flex-wrap: wrap; }
+.top-inner nav { margin-left: auto; }
 .brand { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; font-size: 1.05rem; letter-spacing: -0.01em; }
 .brand b { font-weight: 700; }
 nav { display: flex; gap: 2px; overflow-x: auto; }
@@ -51,6 +53,9 @@ nav a:focus-visible { outline: none; color: var(--ink); background: var(--accent
 .foot p { margin: 0 0 4px; }
 @media (max-width: 560px) {
   .top-inner { padding-top: 8px; }
+  /* toggle stays top right next to the brand; the nav wraps to its own row */
+  .top-inner .theme { margin-left: auto; }
+  .top-inner nav { order: 3; width: 100%; margin-left: 0; }
   nav a { padding: 10px 8px 9px; }
 }
 </style>
