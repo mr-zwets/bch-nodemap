@@ -5,9 +5,11 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+TimeoutStartSec=30min
 User=nodemap
 Group=nodemap
 WorkingDirectory=/opt/bch-nodemap
 ExecStart=/opt/bch-nodemap/scripts/geoip.sh
-# the crawler opens the .mmdb files at start; "+" runs this step as root
+# Only runs when geoip.sh succeeded (it fails if nothing was updated). The crawler
+# opens the .mmdb files at start; "+" runs this fixed command as root.
 ExecStartPost=+/usr/bin/systemctl try-restart nodemap-crawler.service

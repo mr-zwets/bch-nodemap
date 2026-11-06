@@ -6,10 +6,11 @@ Wants=network-online.target postgresql.service
 [Service]
 User=nodemap
 Group=nodemap
-WorkingDirectory=/opt/bch-nodemap/web
+# a copied build, switched by deploy.sh via the symlink; the checkout can rebuild freely
+WorkingDirectory=/var/lib/nodemap/web/current
 Environment=NODE_ENV=production HOST=127.0.0.1 PORT=3000
 Environment=DATABASE_URL=postgres://nodemap@/nodemap?host=/var/run/postgresql
-ExecStart=/usr/bin/node .output/server/index.mjs
+ExecStart=/usr/bin/node server/index.mjs
 Restart=always
 RestartSec=5
 NoNewPrivileges=yes

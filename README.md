@@ -51,13 +51,18 @@ Tests: `cd crawler && go test ./...`
 `deploy/` runs everything on one Debian 13 VPS without Docker: Postgres 17, the crawler and the Nuxt server as systemd services (user `nodemap`, checkout in `/opt/bch-nodemap`), and Caddy in front. The crawler needs a long-running process with many outbound TCP connections, so it cannot run on serverless platforms.
 
 ```sh
-# once, as root, after installing Node.js, Caddy and postgresql-17:
-sudo bash setup.sh [domain]       # no domain: plain HTTP on :80; re-run with one for HTTPS
+# from a checkout you trust: the scripts and unit files run from this copy,
+# never from the nodemap-owned checkout on the server
+scp -r deploy vps:
+# once, after installing Node.js, Caddy and postgresql-17 (re-runnable):
+sudo bash deploy/setup.sh [domain]    # no domain: plain HTTP on :80; a domain turns on HTTPS and is remembered
 # every deploy, as the admin user (no password needed):
-bash /opt/bch-nodemap/deploy/deploy.sh   # pull, build, migrate, restart
+bash ~/deploy/deploy.sh               # pull, build, migrate, then switch and restart
 ```
 
-The services reach Postgres over its Unix socket with peer auth, so there is no database password. GeoIP data refreshes monthly (`nodemap-geoip.timer`). `docker-compose.yml` is an alternative container setup.
+Deploys build the crawler to `bin/*.new` and the web server into a copied release under `/var/lib/nodemap/web` (the last 3 are kept), and only switch over after the migrations succeed. Changes to `deploy/` itself are not picked up from the pull: review them, copy them over, and re-run `setup.sh` (which installs units but restarts nothing; the next deploy does).
+
+The services reach Postgres over its Unix socket with peer auth, so there is no database password. GeoIP data refreshes monthly (`nodemap-geoip.timer`). Logs: `journalctl -u nodemap-web -u nodemap-crawler`. `docker-compose.yml` is an alternative container setup.
 
 ## Data notes
 
