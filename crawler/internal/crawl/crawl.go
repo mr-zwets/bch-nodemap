@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/gcash/bchd/wire"
 
@@ -117,6 +118,7 @@ func visit(ctx context.Context, cfg Config, e Endpoint, res *Result, mu *sync.Mu
 		slog.Debug("unreachable", "addr", e, "err", err)
 		return
 	}
+	r.UserAgent = cleanUserAgent(r.UserAgent)
 
 	for _, s := range cfg.ExcludeUserAgents {
 		if strings.Contains(r.UserAgent, s) {
@@ -198,4 +200,18 @@ func Routable(ip netip.Addr) bool {
 		}
 	}
 	return true
+}
+
+// cleanUserAgent makes a peer-supplied user agent safe to store and show. It is
+// arbitrary bytes from the network: Postgres rejects NUL and invalid UTF-8 in
+// text, which would fail the whole snapshot's COPY, so one hostile node could
+// stop every snapshot. Invalid UTF-8 becomes U+FFFD and control characters
+// (NUL included) are dropped. The wire decoder already caps the length.
+func cleanUserAgent(ua string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, strings.ToValidUTF8(ua, "�"))
 }

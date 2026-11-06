@@ -51,3 +51,21 @@ func TestEndpointFrom(t *testing.T) {
 		t.Error("tor v2 should be ignored")
 	}
 }
+
+func TestCleanUserAgent(t *testing.T) {
+	cases := map[string]string{
+		"/Bitcoin Cash Node:29.2.0/":         "/Bitcoin Cash Node:29.2.0/",
+		"/Bitcoin Cash Node:29.2.0(EB32.0)/": "/Bitcoin Cash Node:29.2.0(EB32.0)/",
+		"":                                   "",
+		"/evil\x00node/":                     "/evilnode/",
+		"/bad\xff\xfeutf8/":                  "/bad�utf8/",
+		"/line\r\nbreak\t/":                  "/linebreak/",
+		"/c1\u0085control/":                  "/c1control/",
+		"/naïve 日本 ok/":                      "/naïve 日本 ok/",
+	}
+	for in, want := range cases {
+		if got := cleanUserAgent(in); got != want {
+			t.Errorf("cleanUserAgent(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
