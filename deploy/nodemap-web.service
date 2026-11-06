@@ -1,0 +1,28 @@
+[Unit]
+Description=bch-nodemap web server (Nuxt)
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+User=nodemap
+Group=nodemap
+WorkingDirectory=/opt/bch-nodemap/web
+Environment=NODE_ENV=production HOST=127.0.0.1 PORT=3000
+Environment=DATABASE_URL=postgres://nodemap@/nodemap?host=/var/run/postgresql
+ExecStart=/usr/bin/node .output/server/index.mjs
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

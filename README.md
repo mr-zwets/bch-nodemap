@@ -48,7 +48,16 @@ Tests: `cd crawler && go test ./...`
 
 ## Deployment
 
-`docker-compose.yml` runs Postgres + crawler (+ web) on a single VPS. The crawler needs a long-running process with many outbound TCP connections, so it cannot run on serverless platforms. See `docker-compose.yml` for the required env vars.
+`deploy/` runs everything on one Debian 13 VPS without Docker: Postgres 17, the crawler and the Nuxt server as systemd services (user `nodemap`, checkout in `/opt/bch-nodemap`), and Caddy in front. The crawler needs a long-running process with many outbound TCP connections, so it cannot run on serverless platforms.
+
+```sh
+# once, as root, after installing Node.js, Caddy and postgresql-17:
+sudo bash setup.sh [domain]       # no domain: plain HTTP on :80; re-run with one for HTTPS
+# every deploy, as the admin user (no password needed):
+bash /opt/bch-nodemap/deploy/deploy.sh   # pull, build, migrate, restart
+```
+
+The services reach Postgres over its Unix socket with peer auth, so there is no database password. GeoIP data refreshes monthly (`nodemap-geoip.timer`). `docker-compose.yml` is an alternative container setup.
 
 ## Data notes
 

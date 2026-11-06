@@ -30,17 +30,7 @@ start() {
     -o "-p $PORT -k $L/run -c listen_addresses=127.0.0.1" start
 }
 
-migrate() {
-  psql -qtAc "create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())"
-  for f in "$ROOT"/db/migrations/*.sql; do
-    n="$(basename "$f")"
-    if [ -z "$(psql -qtAc "select 1 from schema_migrations where name = '$n'")" ]; then
-      echo "applying $n"
-      psql -v ON_ERROR_STOP=1 -q -1 -f "$f"
-      psql -qtAc "insert into schema_migrations (name) values ('$n')"
-    fi
-  done
-}
+migrate() { "$ROOT/scripts/migrate.sh"; }
 
 case "${1:-}" in
   setup)

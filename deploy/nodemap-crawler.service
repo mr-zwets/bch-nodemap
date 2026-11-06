@@ -1,0 +1,29 @@
+[Unit]
+Description=bch-nodemap crawler (one snapshot every 10 min)
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+User=nodemap
+Group=nodemap
+WorkingDirectory=/opt/bch-nodemap
+Environment=DATABASE_URL=postgres://nodemap@/nodemap?host=/var/run/postgresql
+ExecStart=/opt/bch-nodemap/crawler/bin/crawler -network mainnet -interval 10m
+# up to 500 concurrent peer connections
+LimitNOFILE=65536
+Restart=always
+RestartSec=30
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

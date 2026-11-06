@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh DB-IP Lite GeoIP databases for the bch-nodemap crawler
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=nodemap
+Group=nodemap
+WorkingDirectory=/opt/bch-nodemap
+ExecStart=/opt/bch-nodemap/scripts/geoip.sh
+# the crawler opens the .mmdb files at start; "+" runs this step as root
+ExecStartPost=+/usr/bin/systemctl try-restart nodemap-crawler.service
