@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ConsensusCounts, SnapshotSummary, VersionRow } from '#shared/types/api'
+import type { ConsensusCounts, HeightRow, SnapshotSummary, VersionRow } from '#shared/types/api'
 import { CONSENSUS_LABEL, CONSENSUS_STATUSES, AT_TIP_MAX_LAG, BEHIND_MAX_LAG, stallLabel } from '#shared/utils/consensus'
 import { implShort, parseUserAgent } from '#shared/utils/ua'
 
@@ -88,7 +88,13 @@ function pieLabel(row: { key: string }) {
   }
 }
 
-const stallOf = (height: number | null) => (s.value ? stallLabel(height, s.value.tip.height, s.value.snapshot.takenAt) : null)
+// Software per height: the first few inline, the rest in a tooltip
+const HEIGHT_VERSIONS_SHOWN = 4
+const heightVersions = (h: HeightRow) => (h.versions ?? []).slice(0, HEIGHT_VERSIONS_SHOWN)
+const heightVersionsRest = (h: HeightRow) => (h.versions ?? []).slice(HEIGHT_VERSIONS_SHOWN)
+const heightVersionsRestTitle = (h: HeightRow) => heightVersionsRest(h).map((x) => `${x.key} ×${x.count}`).join(', ')
+
+const stallOf = (h: HeightRow) => (s.value ? stallLabel(h.height, s.value.tip.height, s.value.snapshot.takenAt) : null)
 
 function versionRelease(row: { key: string }) {
   const r = row as unknown as VersionRow
@@ -220,7 +226,7 @@ function uaRelease(ua: string) {
         <div v-if="tab === 'height'" class="table-scroll">
           <table class="data">
             <thead>
-              <tr><th>Height</th><th class="r">Blocks behind tip</th><th class="r">Nodes</th><th>Status</th><th>Stuck at</th></tr>
+              <tr><th>Height</th><th class="r">Blocks behind tip</th><th class="r">Nodes</th><th>Status</th><th>Stuck at</th><th>Software</th></tr>
             </thead>
             <tbody>
               <tr v-for="h in s.heights" :key="String(h.height)">
@@ -228,7 +234,17 @@ function uaRelease(ua: string) {
                 <td class="r">{{ h.lag == null ? '—' : h.lag <= 0 ? (h.lag === 0 ? '0' : `${-h.lag} ahead`) : fmtInt(h.lag) }}</td>
                 <td class="r">{{ h.count }}</td>
                 <td><StatusBadge :status="h.status" /></td>
-                <td><span v-if="stallOf(h.height)" class="stall" :title="stallOf(h.height)!.detail">{{ stallOf(h.height)!.label }}</span></td>
+                <td><span v-if="stallOf(h)" class="stall" :title="stallOf(h)!.detail">{{ stallOf(h)!.label }}</span></td>
+                <td class="hv">
+                  <span v-for="x in heightVersions(h)" :key="x.key" class="hv-item">
+                    <span class="swatch" :style="{ background: implColor(x.impl) }" /> {{ x.key }}<span v-if="h.count > 1" class="muted num"> ×{{ x.count }}</span><ReleaseBadge :impl="x.impl" :version="x.version" />
+                  </span>
+                  <span
+                    v-if="heightVersionsRest(h).length"
+                    class="hv-item muted"
+                    :title="heightVersionsRestTitle(h)"
+                  >+{{ heightVersionsRest(h).length }} more</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -305,4 +321,7 @@ tr.allstalled td:first-child { color: var(--ink-2); }
 .tiph { display: inline-flex; align-items: center; gap: 4px; }
 .cc { margin-left: 6px; }
 .stall { font-size: 0.85rem; color: var(--ink-2); }
+.hv { font-size: 0.85rem; min-width: 220px; }
+.hv-item { display: inline-block; white-space: nowrap; margin-right: 14px; }
+.hv-item .swatch { margin-right: 4px; }
 </style>

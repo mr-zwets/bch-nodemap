@@ -139,8 +139,12 @@ export async function snapshotSummary(snap: SnapshotMeta): Promise<SnapshotSumma
           lag: r.height != null && tip != null ? tip - r.height : null,
           status,
           count: 0,
+          versions: [],
         }
         h.count += r.c
+        const hv = h.versions.find((v) => v.key === vkey)
+        if (hv) hv.count += r.c
+        else h.versions.push({ key: vkey, impl: p.impl, version: p.version, count: r.c })
         heights.set(hk, h)
         break
       }
@@ -173,13 +177,16 @@ export async function snapshotSummary(snap: SnapshotMeta): Promise<SnapshotSumma
     consensus,
     byUserAgent: [...byUA].map(([key, count]) => ({ key, count })).sort(desc),
     byUserAgentRaw: [...byUARaw].map(([key, count]) => ({ key, count })).sort(desc),
-    byImplementation: [...byImpl.values()].sort(desc),
+    // equal node counts: the implementation with more nodes at the tip first
+    byImplementation: [...byImpl.values()].sort((a, b) => b.count - a.count || b.at_tip - a.at_tip || a.key.localeCompare(b.key)),
     byVersion: [...byVersion.values()].sort(desc),
     byCountry: byCountry.sort(desc),
     byNet: byNet.sort(desc),
     byProvider: [...byProvider.values()].sort(desc),
     byOrg: byOrg.sort(desc),
-    heights: [...heights.values()].sort((a, b) => (b.height ?? -1) - (a.height ?? -1)),
+    heights: [...heights.values()]
+      .map((h) => ({ ...h, versions: h.versions.sort(desc) }))
+      .sort((a, b) => (b.height ?? -1) - (a.height ?? -1)),
   }
 
   if (!fresh && nodes > 0) {

@@ -57,6 +57,8 @@ export interface HeightRow {
   lag: number | null
   status: ConsensusStatus
   count: number
+  /** software reporting this height, most nodes first */
+  versions: Array<{ key: string; impl: string; version: string; count: number }>
 }
 
 export interface SnapshotSummary {
