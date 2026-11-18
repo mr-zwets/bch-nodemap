@@ -1,5 +1,6 @@
 // Package probe performs a single P2P handshake with a node and asks it for
-// the addresses it knows (version -> verack -> getaddr -> addr/addrv2).
+// the addresses it knows (version -> verack -> getaddr -> addr/addrv2) and,
+// optionally, for a header that proves which chain it follows.
 package probe
 
 import (
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"github.com/gcash/bchd/wire"
+
+	"github.com/bch-nodemap/bch-nodemap/crawler/internal/network"
 )
 
 // UserAgent identifies the crawler to node operators (BIP 14).
@@ -25,8 +28,18 @@ type Options struct {
 	Magic          wire.BitcoinNet
 	DialTimeout    time.Duration // TCP connect
 	HandshakeLimit time.Duration // until version+verack are exchanged
-	AddrWait       time.Duration // how long to wait for the getaddr response
+	AddrWait       time.Duration // how long to wait for the getaddr (and chain check) response
+	ChainCheck     *network.ChainCheck
 }
+
+// Chain is the outcome of the chain check.
+type Chain int
+
+const (
+	ChainUnknown Chain = iota // not checked, or no usable answer (e.g. still syncing)
+	ChainOK                   // answered with the expected header
+	ChainOther                // answered with headers of a different chain
+)
 
 type Result struct {
 	ProtocolVersion int32
@@ -35,6 +48,7 @@ type Result struct {
 	Height          int32
 	Latency         time.Duration // connect + until their version arrived
 	Addrs           []*wire.NetAddressV2
+	Chain           Chain
 }
 
 // Probe connects to addr ("host:port"), completes a handshake and collects
@@ -77,7 +91,9 @@ func Probe(ctx context.Context, d Dialer, addr string, o Options) (*Result, erro
 		res          *Result
 		gotVerack    bool
 		sentGetaddr  bool
+		gotAddrs     bool
 		addrDeadline time.Time
+		chainPending = o.ChainCheck != nil
 	)
 	handshakeDeadline := start.Add(o.DialTimeout + o.HandshakeLimit)
 	_ = conn.SetReadDeadline(handshakeDeadline)
@@ -126,18 +142,40 @@ func Probe(ctx context.Context, d Dialer, addr string, o Options) (*Result, erro
 				res.Addrs = append(res.Addrs, wire.NetAddressV2FromLegacy(na))
 			}
 			if sentGetaddr && len(m.AddrList) > 1 {
-				return res, nil // the getaddr response; single entries are self-announcements
+				gotAddrs = true // the getaddr response; single entries are self-announcements
 			}
 		case *wire.MsgAddrV2:
 			res.Addrs = append(res.Addrs, m.AddrList...)
 			if sentGetaddr && len(m.AddrList) > 1 {
-				return res, nil
+				gotAddrs = true
 			}
+		case *wire.MsgHeaders:
+			// An empty answer proves nothing: the peer may know Block but not
+			// be past it.
+			if chainPending && sentGetaddr && len(m.Headers) > 0 {
+				chainPending = false
+				if m.Headers[0].PrevBlock == o.ChainCheck.Block {
+					res.Chain = ChainOK
+				} else {
+					res.Chain = ChainOther
+				}
+			}
+		}
+		if gotAddrs && !chainPending {
+			return res, nil
 		}
 
 		if res != nil && gotVerack && !sentGetaddr {
 			if err := send(wire.NewMsgGetAddr()); err != nil {
 				return res, nil
+			}
+			if o.ChainCheck != nil {
+				gh := wire.NewMsgGetHeaders()
+				gh.HashStop = o.ChainCheck.Next
+				_ = gh.AddBlockLocatorHash(&o.ChainCheck.Block)
+				if err := send(gh); err != nil {
+					return res, nil
+				}
 			}
 			sentGetaddr = true
 			addrDeadline = time.Now().Add(o.AddrWait)

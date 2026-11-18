@@ -6,7 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gcash/bchd/chaincfg/chainhash"
 	"github.com/gcash/bchd/wire"
+
+	"github.com/bch-nodemap/bch-nodemap/crawler/internal/network"
 )
 
 const torV3Host = "pg6mmjiyjmcrsslvykfwnntlaru7p5svn6y2ymmju6nubxndf4pscryd.onion"
@@ -14,7 +17,8 @@ const torV3Host = "pg6mmjiyjmcrsslvykfwnntlaru7p5svn6y2ymmju6nubxndf4pscryd.onio
 // fakePeer accepts one connection and plays the node side of the handshake.
 // It sends a single-entry self-announcement before the real getaddr answer,
 // like BCHN does, and answers getaddr with addrv2 if we asked for it.
-func fakePeer(t *testing.T, magic wire.BitcoinNet, userAgent string) (string, <-chan bool) {
+// getheaders is answered with one header that follows headerPrev[0], if given.
+func fakePeer(t *testing.T, magic wire.BitcoinNet, userAgent string, headerPrev ...chainhash.Hash) (string, <-chan bool) {
 	t.Helper()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -63,6 +67,12 @@ func fakePeer(t *testing.T, magic wire.BitcoinNet, userAgent string) (string, <-
 				if wantsV2 {
 					send(resp)
 				}
+			case *wire.MsgGetHeaders:
+				if len(headerPrev) > 0 {
+					h := wire.NewMsgHeaders()
+					_ = h.AddBlockHeader(&wire.BlockHeader{PrevBlock: headerPrev[0]})
+					send(h)
+				}
 			}
 		}
 	}()
@@ -101,5 +111,35 @@ func TestProbeWrongMagicFails(t *testing.T) {
 	res, err := Probe(context.Background(), &net.Dialer{}, addr, opts(wire.TestNet4))
 	if err == nil || res != nil {
 		t.Fatalf("expected handshake failure across networks, got res=%v err=%v", res, err)
+	}
+}
+
+func TestProbeChainCheck(t *testing.T) {
+	check := network.Mainnet.ChainCheck
+	cases := []struct {
+		name string
+		prev []chainhash.Hash
+		want Chain
+	}{
+		{"same chain", []chainhash.Hash{check.Block}, ChainOK},
+		{"other chain answers from its genesis", []chainhash.Hash{{0x6f, 0xe2}}, ChainOther},
+		{"no answer", nil, ChainUnknown},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			addr, _ := fakePeer(t, wire.MainNet, "/bcash:2.2.5/", c.prev...)
+			o := opts(wire.MainNet)
+			o.ChainCheck = check
+			res, err := Probe(context.Background(), &net.Dialer{}, addr, o)
+			if err != nil || res == nil {
+				t.Fatalf("probe: res=%v err=%v", res, err)
+			}
+			if res.Chain != c.want {
+				t.Errorf("chain = %v, want %v", res.Chain, c.want)
+			}
+			if len(res.Addrs) != 4 {
+				t.Errorf("got %d addrs, want 4", len(res.Addrs))
+			}
+		})
 	}
 }

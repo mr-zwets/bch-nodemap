@@ -85,6 +85,7 @@ func main() {
 			DialTimeout:    10 * time.Second,
 			HandshakeLimit: 15 * time.Second,
 			AddrWait:       20 * time.Second,
+			ChainCheck:     params.ChainCheck,
 		},
 		Direct:            &net.Dialer{},
 		MaxAddrAge:        *maxAge,
@@ -150,8 +151,16 @@ func runOnce(ctx context.Context, cfg crawl.Config, db *store.Store, geodb *geo.
 		excluded += n
 		slog.Debug("excluded user agent", "ua", ua, "count", n)
 	}
+	// reachable nodes that gave no usable answer to the chain check (kept)
+	unverified := 0
+	for _, r := range res.Reachable {
+		if cfg.Probe.ChainCheck != nil && r.Chain == probe.ChainUnknown {
+			unverified++
+			slog.Debug("chain unverified", "addr", r.Endpoint, "ua", r.UserAgent, "height", r.Height)
+		}
+	}
 	slog.Info("crawl finished", "reachable", len(res.Reachable), "excluded", excluded,
-		"discovered", res.Discovered, "took", res.Duration.Round(time.Second))
+		"chain_unverified", unverified, "discovered", res.Discovered, "took", res.Duration.Round(time.Second))
 
 	nodes := enrich(ctx, res, geodb, firstSeen, rdns)
 	if db == nil {

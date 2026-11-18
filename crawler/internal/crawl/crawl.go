@@ -32,6 +32,8 @@ type Config struct {
 	// strings (e.g. eCash nodes that share the BCH network magic). Their
 	// gossip is not followed either.
 	ExcludeUserAgents []string
+	// Nodes that fail the probe's chain check (Probe.ChainCheck) are dropped
+	// the same way, whatever user agent they advertise.
 }
 
 type Endpoint struct {
@@ -127,6 +129,13 @@ func visit(ctx context.Context, cfg Config, e Endpoint, res *Result, mu *sync.Mu
 			mu.Unlock()
 			return
 		}
+	}
+
+	if r.Chain == probe.ChainOther {
+		mu.Lock()
+		res.Excluded[r.UserAgent+" (other chain)"]++
+		mu.Unlock()
+		return
 	}
 
 	mu.Lock()
